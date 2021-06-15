@@ -9,16 +9,9 @@ ui <- dashboardPage(
   dashboardHeader(title = "Diamonds dashboard"),
   dashboardSidebar(disable = TRUE),
   dashboardBody(
-    tabsetPanel(
-      id = "tabs",
-      tabPanel(
-        title = "Main",
-        value = "cut",
-        fluidRow(
-          box(title = "Cut", girafeOutput("cut"), width = 6),
-          box(title = "Clarity", girafeOutput("clarity"), width = 6)
-        )
-      )
+    fluidRow(
+      box(title = "Cut", girafeOutput("cut"), width = 6),
+      box(title = "Clarity", girafeOutput("clarity"), width = 6)
     )
   )
 )
@@ -27,9 +20,9 @@ server <- function(input, output, session) {
   output$cut <- renderGirafe({
     gg_cut <- diamonds %>%
       group_by(cut) %>%
-      summarise(avgerage_price = median(price)) %>%
+      summarise(average_price = median(price)) %>%
       ggplot() +
-      geom_col_interactive(aes(cut, avgerage_price, data_id = cut)) +
+      geom_col_interactive(aes(cut, average_price, data_id = cut, tooltip = average_price)) +
       coord_flip()
 
     girafe(
