@@ -5,7 +5,8 @@ Authors@R:
     person(given = "Edgar",
            family = "Ruiz",
            role = c("aut", "cre"),
-           email = "edgar@rstudio.com",
+           email = "edgar@rstudio.com"
+           )
 Description: This package contains the `shiny` examples that show how to build apps with 
     ever more complex drill-down capabilities.
 License: MIT + file LICENSE
@@ -13,3 +14,6 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
+Imports:
+    fs,
+    shiny
