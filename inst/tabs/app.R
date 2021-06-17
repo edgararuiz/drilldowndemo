@@ -46,32 +46,30 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$cut_selected, {
+
     cut_last <- input$cut_selected
     carat_from <- isolate(input$carat[[1]])
     carat_to <- isolate(input$carat[[2]])
     clarity_title <- paste(cut_last, "|", carat_from, "-", carat_to)
     cut_clean <- make_clean_names(clarity_title)
     cat(cut_clean, "\n")
-    observeEvent(input$cut_selected, {
-      cut_last <- input$cut_selected
-      carat_from <- isolate(input$carat[[1]])
-      carat_to <- isolate(input$carat[[2]])
-      output[[cut_clean]] <- renderGirafe({
-        gg_clarity <- diamonds %>%
-          filter(carat >= carat_from,
-                 carat <= carat_to,
-                 cut == cut_last
-          ) %>%
-          ggplot() +
-          geom_boxplot_interactive(aes(clarity, price, data_id = clarity)) +
-          labs(title = clarity_title)
 
-        girafe(
-          ggobj = gg_clarity,
-          options = list(opts_selection(type = "single"))
-        )
-      })
-      session$sendCustomMessage(type = "cut_set", message = character(0))
+    output[[cut_clean]] <- renderGirafe({
+      gg_clarity <- diamonds %>%
+        filter(carat >= carat_from,
+               carat <= carat_to,
+               cut == cut_last
+        ) %>%
+        ggplot() +
+        geom_boxplot_interactive(aes(clarity, price, data_id = clarity)) +
+        labs(title = clarity_title)
+
+      girafe(
+        ggobj = gg_clarity,
+        options = list(opts_selection(type = "single"))
+      )
+
+
     })
     appendTab(
       inputId = "tabs",
@@ -87,6 +85,8 @@ server <- function(input, output, session) {
         ))
       )
     )
+
+    session$sendCustomMessage(type = "cut_set", message = character(0))
   })
 }
 
