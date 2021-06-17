@@ -10,6 +10,12 @@ ui <- dashboardPage(
   dashboardSidebar(disable = TRUE),
   dashboardBody(
     fluidRow(
+      box(
+        sliderInput("carat", "Carats", 0, 5.1, step = 0.1, value = c(0.1, 0.5)),
+        width = 6
+      )
+    ),
+    fluidRow(
       box(title = "Cut", girafeOutput("cut"), width = 6),
       box(title = "Clarity", girafeOutput("clarity"), width = 6)
     )
@@ -19,6 +25,7 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
   output$cut <- renderGirafe({
     gg_cut <- diamonds %>%
+      filter(carat >= input$carat[[1]], carat <= input$carat[[2]]) %>%
       group_by(cut) %>%
       summarise(average_price = median(price)) %>%
       ggplot() +
@@ -33,21 +40,25 @@ server <- function(input, output, session) {
 
   observeEvent(input$cut_selected, {
     cut_last <- input$cut_selected
-    if (!is.null(cut_last)) {
-      output$clarity <- renderGirafe({
-        gg_clarity <- diamonds %>%
-          filter(cut == cut_last) %>%
-          ggplot() +
-          geom_boxplot_interactive(aes(clarity, price, data_id = clarity)) +
-          labs(title = cut_last)
+    carat_from <- isolate(input$carat[[1]])
+    carat_to <- isolate(input$carat[[2]])
+    output$clarity <- renderGirafe({
+      gg_clarity <- diamonds %>%
+        filter(carat >= carat_from, carat <= carat_to) %>%
+        filter(cut == cut_last) %>%
+        ggplot() +
+        geom_boxplot_interactive(aes(clarity, price, data_id = clarity)) +
+        labs(title = paste(
+          "Clarity:", cut_last, "|",
+          " Carat size from:", carat_from, "to", carat_to
+        ))
 
-        girafe(
-          ggobj = gg_clarity,
-          options = list(opts_selection(type = "single"))
-        )
-      })
-      session$sendCustomMessage(type = "cut_set", message = character(0))
-    }
+      girafe(
+        ggobj = gg_clarity,
+        options = list(opts_selection(type = "single"))
+      )
+    })
+    session$sendCustomMessage(type = "cut_set", message = character(0))
   })
 }
 
