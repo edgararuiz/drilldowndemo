@@ -49,22 +49,22 @@ server <- function(input, output, session) {
 
   observeEvent(input$cut_selected, {
 
-    cut_last <- input$cut_selected
+    cut_selected <- input$cut_selected
     carat_from <- isolate(input$carat[[1]])
     carat_to <- isolate(input$carat[[2]])
-    clarity_title <- paste(cut_last, "|", carat_from, "-", carat_to)
-    cut_clean <- make_clean_names(clarity_title)
+    clarity_title <- paste(cut_selected, "|", carat_from, "-", carat_to)
+    clarity_clean <- make_clean_names(clarity_title)
 
-    if(!(cut_clean %in% tab_list)) {
+    if(!(clarity_clean %in% tab_list)) {
 
-      tab_list <<- c(tab_list, cut_clean)
+      tab_list <<- c(tab_list, clarity_clean)
 
-      output[[cut_clean]] <- renderGirafe({
+      output[[clarity_clean]] <- renderGirafe({
         gg_clarity <- diamonds %>%
           filter(
             carat >= carat_from,
             carat <= carat_to,
-            cut == cut_last
+            cut == cut_selected
           ) %>%
           ggplot() +
           geom_boxplot_interactive(aes(clarity, price, data_id = clarity)) +
@@ -79,17 +79,17 @@ server <- function(input, output, session) {
         inputId = "tabs",
         tabPanel(
           clarity_title,
-          value = cut_clean,
+          value = clarity_clean,
           fluidRow(box(
             title = clarity_title,
-            girafeOutput(cut_clean),
+            girafeOutput(clarity_clean),
             width = 12
           ))
         )
       )
 
     }
-    updateTabsetPanel(session, "tabs", cut_clean)
+    updateTabsetPanel(session, "tabs", clarity_clean)
     session$sendCustomMessage(type = "cut_set", message = character(0))
   })
 }

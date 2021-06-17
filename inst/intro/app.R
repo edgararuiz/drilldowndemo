@@ -38,18 +38,18 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$cut_selected, {
-    cut_last <- input$cut_selected
+    cut_selected <- input$cut_selected
     carat_from <- isolate(input$carat[[1]])
     carat_to <- isolate(input$carat[[2]])
     clarity_title <- paste(
-      "Clarity:", cut_last, "|",
+      "Clarity:", cut_selected, "|",
       " Carat size from:", carat_from, "to", carat_to
     )
     output$clarity <- renderGirafe({
       gg_clarity <- diamonds %>%
         filter(carat >= carat_from,
                carat <= carat_to,
-               cut == cut_last
+               cut == cut_selected
                ) %>%
         ggplot() +
         geom_boxplot_interactive(aes(clarity, price, data_id = clarity)) +
