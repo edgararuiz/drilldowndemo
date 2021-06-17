@@ -3,7 +3,6 @@ library(shinydashboard)
 library(dplyr)
 library(ggplot2)
 library(ggiraph)
-library(janitor)
 
 ui <- dashboardPage(
   dashboardHeader(title = "Diamonds dashboard"),
@@ -42,16 +41,19 @@ server <- function(input, output, session) {
     cut_last <- input$cut_selected
     carat_from <- isolate(input$carat[[1]])
     carat_to <- isolate(input$carat[[2]])
+    clarity_title <- paste(
+      "Clarity:", cut_last, "|",
+      " Carat size from:", carat_from, "to", carat_to
+    )
     output$clarity <- renderGirafe({
       gg_clarity <- diamonds %>%
-        filter(carat >= carat_from, carat <= carat_to) %>%
-        filter(cut == cut_last) %>%
+        filter(carat >= carat_from,
+               carat <= carat_to,
+               cut == cut_last
+               ) %>%
         ggplot() +
         geom_boxplot_interactive(aes(clarity, price, data_id = clarity)) +
-        labs(title = paste(
-          "Clarity:", cut_last, "|",
-          " Carat size from:", carat_from, "to", carat_to
-        ))
+        labs(title = clarity_title)
 
       girafe(
         ggobj = gg_clarity,
