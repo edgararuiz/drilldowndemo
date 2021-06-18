@@ -2,16 +2,22 @@
 #' @importFrom shiny runApp
 #' @importFrom rstudioapi navigateToFile
 
+#' @title Runs an example Shiny app
+#' @param app_name Name of one of Shiny apps within the package. Possible values:
+#' intro, tabs, navigation, details
 #' @export
 drilldowndemo_run <- function(app_name) {
   app_file <- find_app(app_name = app_name)
-  runApp(app_file)
+  if(interactive()) runApp(app_file)
 }
 
+#' @title Opens an example Shiny app in the RStudio IDE
+#' @param app_name Name of one of Shiny apps within the package. Possible values:
+#' intro, tabs, navigation, details
 #' @export
 drilldowndemo_open <- function(app_name) {
   app_file <- find_app(app_name = app_name)
-  navigateToFile(app_file)
+  if(interactive()) navigateToFile(app_file)
 }
 
 find_app <- function(app_name) {
