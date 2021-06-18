@@ -108,7 +108,7 @@ server <- function(input, output, session) {
       input[[cut_clean_selected]],
       {
         clarity_name <- input[[cut_clean_selected]]
-        clarity_title <- paste(cut_selected, "|", carat_from, "-", carat_to, "|", clarity_name)
+        clarity_title <- paste(cut_title, "|", clarity_name)
         clarity_clean <- make_clean_names(clarity_title)
         output[[clarity_clean]] <- renderDT(
           {
@@ -118,7 +118,7 @@ server <- function(input, output, session) {
                 cut == cut_selected,
                 carat >= carat_from,
                 carat <= carat_to
-                ) %>%
+              ) %>%
               select(-clarity, -cut) %>%
               head(100)
           },
@@ -136,7 +136,7 @@ server <- function(input, output, session) {
                 box(
                   title = "Details",
                   actionLink(clarity_close, "Close"), " | ",
-                  actionLink(clarity_home, paste0("Go to ", cut_selected)),
+                  actionLink(clarity_home, paste0("Go to ", cut_title)),
                   br(), br(),
                   DTOutput(clarity_clean),
                   width = 10
@@ -148,6 +148,7 @@ server <- function(input, output, session) {
           observeEvent(input[[clarity_close]], {
             removeTab("tabs", clarity_clean)
             tab_list <<- tab_list[tab_list != clarity_clean]
+            updateTabsetPanel(session, "tabs", cut_clean)
           })
           observeEvent(input[[clarity_home]], {
             updateTabsetPanel(session, "tabs", cut_clean)
@@ -155,7 +156,6 @@ server <- function(input, output, session) {
         }
         updateTabsetPanel(session, "tabs", clarity_clean)
         session$sendCustomMessage(type = paste0(cut_clean, "_set"), message = character(0))
-
       }
     )
   })
