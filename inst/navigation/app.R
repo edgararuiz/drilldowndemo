@@ -4,8 +4,6 @@ library(dplyr)
 library(ggplot2)
 library(ggiraph)
 library(janitor)
-library(DT)
-library(htmltools)
 
 ui <- dashboardPage(
   dashboardHeader(title = "Diamonds dashboard"),
@@ -14,9 +12,17 @@ ui <- dashboardPage(
     tabsetPanel(
       id = "tabs",
       tabPanel(
-        title = "Main",
+        title = "Cut",
         value = "cut",
-        fluidRow(box(title = "Cut", girafeOutput("cut"), width = 12))
+        fluidRow(
+          box(
+            sliderInput("carat", "Carats", 0, 5.1, step = 0.1, value = c(0.1, 0.5)),
+            width = 6
+          )
+        ),
+        fluidRow(
+          box(title = "Cut", girafeOutput("cut"), width = 6)
+        )
       )
     )
   )
@@ -25,16 +31,13 @@ ui <- dashboardPage(
 server <- function(input, output, session) {
   tab_list <- NULL
 
-  cut_last <- NULL
-  cut_home <- NULL
-  cut_close <- NULL
-
   output$cut <- renderGirafe({
     gg_cut <- diamonds %>%
+      filter(carat >= input$carat[[1]], carat <= input$carat[[2]]) %>%
       group_by(cut) %>%
-      summarise(avgerage_price = median(price)) %>%
+      summarise(average_price = median(price)) %>%
       ggplot() +
-      geom_col_interactive(aes(cut, avgerage_price, data_id = cut)) +
+      geom_col_interactive(aes(cut, average_price, data_id = cut, tooltip = average_price)) +
       coord_flip()
 
     girafe(
@@ -44,101 +47,61 @@ server <- function(input, output, session) {
   })
 
   observeEvent(input$cut_selected, {
-    if (length(input$cut_selected) > 0) cut_last <<- input$cut_selected
-    if (!is.null(cut_last)) {
-      cut_clean <- make_clean_names(paste("cl", cut_last))
-      if (!(cut_clean %in% tab_list)) {
-        cut_close <- paste0("close_", cut_clean)
-        cut_home <- paste0("home_", cut_clean)
-        output[[cut_clean]] <- renderGirafe({
-          gg_clarity <- diamonds %>%
-            filter(cut == cut_last) %>%
-            ggplot() +
-            geom_boxplot_interactive(aes(clarity, price , data_id = clarity))
+    cut_selected <- input$cut_selected
+    carat_from <- isolate(input$carat[[1]])
+    carat_to <- isolate(input$carat[[2]])
+    clarity_title <- paste(cut_selected, "|", carat_from, "-", carat_to)
+    clarity_clean <- make_clean_names(clarity_title)
 
-          girafe(
-            ggobj = gg_clarity,
-            options = list(opts_selection(type = "single"))
-          )
-        })
-        appendTab(
-          inputId = "tabs",
-          tabPanel(
-            cut_last,
-            value = cut_clean,
-            fluidRow(box(
-              title = "Clarity",
-              actionLink(cut_close, "Close"), " | ",
-              actionLink(cut_home, paste0("Go to main")),
-              girafeOutput(cut_clean),
-              width = 12
-            ))
-          )
+    if (!(clarity_clean %in% tab_list)) {
+      tab_list <<- c(tab_list, clarity_clean)
+
+      output[[clarity_clean]] <- renderGirafe({
+        gg_clarity <- diamonds %>%
+          filter(
+            carat >= carat_from,
+            carat <= carat_to,
+            cut == cut_selected
+          ) %>%
+          ggplot() +
+          geom_boxplot_interactive(aes(clarity, price, data_id = clarity)) +
+          labs(title = clarity_title)
+
+        girafe(
+          ggobj = gg_clarity,
+          options = list(opts_selection(type = "single"))
         )
-        tab_list <<- c(tab_list, cut_clean)
-        observeEvent(input[[cut_close]], {
-          removeTab("tabs", cut_clean)
-          tab_list <<- tab_list[tab_list != cut_clean]
-        })
-        observeEvent(input[[cut_home]], {
-          updateTabsetPanel(session, "tabs", "cut")
-        })
-      }
-      updateTabsetPanel(session, "tabs", cut_clean)
-      session$sendCustomMessage(type = "cut_set", message = character(0))
-    }
+      })
 
-    x_name <- paste0(cut_clean, "_selected")
-    observeEvent(
-      input[[x_name]],
-      {
-        clarity_name <- input[[x_name]]
-        clarity_clean <- make_clean_names(paste("cl", cut_clean, clarity_name))
-        if (length(clarity_name) > 0) clarity_last <<- clarity_clean
-        if (!is.null(clarity_last)) {
-          output[[clarity_clean]] <- renderDT(
-            {
-              diamonds %>%
-                filter(clarity == clarity_name, cut == cut_last) %>%
-                select(-clarity, -cut) %>%
-                head(100)
-            },
-            rownames = FALSE
-          )
-          clarity_close <- paste0("close_", clarity_clean)
-          clarity_home <- paste0("home_", clarity_clean)
-          if (!(clarity_clean %in% tab_list)) {
-            appendTab(
-              inputId = "tabs",
-              tabPanel(
-                title = paste(cut_last, "-", clarity_name),
-                value = clarity_clean,
-                fluidRow(
-                  box(
-                    title = "Details",
-                    actionLink(clarity_close, "Close"), " | ",
-                    actionLink(clarity_home, paste0("Go to ", cut_last)),
-                    br(), br(),
-                    DTOutput(clarity_clean),
-                    width = 10
-                  )
-                )
-              )
-            )
-            tab_list <<- c(tab_list, clarity_clean)
-            observeEvent(input[[clarity_close]], {
-              removeTab("tabs", clarity_clean)
-              tab_list <<- tab_list[tab_list != clarity_clean]
-            })
-            observeEvent(input[[clarity_home]], {
-              updateTabsetPanel(session, "tabs", cut_clean)
-            })
-          }
-          updateTabsetPanel(session, "tabs", clarity_clean)
-          session$sendCustomMessage(type = paste0(cut_clean, "_set"), message = character(0))
-        }
-      }
-    )
+      clarity_close <- paste0("close_", clarity_clean)
+      clarity_home <- paste0("home_", clarity_clean)
+
+      appendTab(
+        inputId = "tabs",
+        tabPanel(
+          clarity_title,
+          value = clarity_clean,
+          fluidRow(box(
+            title = clarity_title,
+            actionLink(clarity_close, "Close"), " | ",
+            actionLink(clarity_home, paste0("Go to main")),
+            girafeOutput(clarity_clean),
+            width = 12
+          ))
+        )
+      )
+
+      observeEvent(input[[clarity_close]], {
+        removeTab("tabs", clarity_clean)
+        tab_list <<- tab_list[tab_list != clarity_clean]
+        updateTabsetPanel(session, "tabs", "cut")
+      })
+      observeEvent(input[[clarity_home]], {
+        updateTabsetPanel(session, "tabs", "cut")
+      })
+    }
+    updateTabsetPanel(session, "tabs", clarity_clean)
+    session$sendCustomMessage(type = "cut_set", message = character(0))
   })
 }
 
