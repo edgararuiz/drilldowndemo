@@ -102,6 +102,62 @@ server <- function(input, output, session) {
     }
     updateTabsetPanel(session, "tabs", cut_clean)
     session$sendCustomMessage(type = "cut_set", message = character(0))
+
+    cut_clean_selected <- paste0(cut_clean, "_selected")
+    observeEvent(
+      input[[cut_clean_selected]],
+      {
+        clarity_name <- input[[cut_clean_selected]]
+        clarity_title <- paste(cut_selected, "|", carat_from, "-", carat_to, "|", clarity_name)
+        clarity_clean <- make_clean_names(clarity_title)
+        output[[clarity_clean]] <- renderDT(
+          {
+            diamonds %>%
+              filter(
+                clarity == clarity_name,
+                cut == cut_selected,
+                carat >= carat_from,
+                carat <= carat_to
+                ) %>%
+              select(-clarity, -cut) %>%
+              head(100)
+          },
+          rownames = FALSE
+        )
+        clarity_close <- paste0("close_", clarity_clean)
+        clarity_home <- paste0("home_", clarity_clean)
+        if (!(clarity_clean %in% tab_list)) {
+          appendTab(
+            inputId = "tabs",
+            tabPanel(
+              title = clarity_title,
+              value = clarity_clean,
+              fluidRow(
+                box(
+                  title = "Details",
+                  actionLink(clarity_close, "Close"), " | ",
+                  actionLink(clarity_home, paste0("Go to ", cut_selected)),
+                  br(), br(),
+                  DTOutput(clarity_clean),
+                  width = 10
+                )
+              )
+            )
+          )
+          tab_list <<- c(tab_list, clarity_clean)
+          observeEvent(input[[clarity_close]], {
+            removeTab("tabs", clarity_clean)
+            tab_list <<- tab_list[tab_list != clarity_clean]
+          })
+          observeEvent(input[[clarity_home]], {
+            updateTabsetPanel(session, "tabs", cut_clean)
+          })
+        }
+        updateTabsetPanel(session, "tabs", clarity_clean)
+        session$sendCustomMessage(type = paste0(cut_clean, "_set"), message = character(0))
+
+      }
+    )
   })
 }
 
