@@ -1,4 +1,4 @@
-#' @importFrom fs path dir_exists
+#' @importFrom fs path dir_exists dir_ls file_exists path_file
 #' @importFrom shiny runApp
 #' @importFrom rstudioapi navigateToFile
 
@@ -8,7 +8,7 @@
 #' @export
 drilldowndemo_run <- function(app_name) {
   app_file <- find_app(app_name = app_name)
-  if(interactive()) runApp(app_file)
+  if (interactive()) runApp(app_file)
 }
 
 #' @title Opens an example Shiny app in the RStudio IDE
@@ -17,17 +17,27 @@ drilldowndemo_run <- function(app_name) {
 #' @export
 drilldowndemo_open <- function(app_name) {
   app_file <- find_app(app_name = app_name)
-  if(interactive()) navigateToFile(app_file)
+  if (interactive()) navigateToFile(app_file)
 }
 
-find_app <- function(app_name) {
+find_folder <- function() {
   app_folder <- NULL
-  app_file <- NULL
-  source_folder <- path("inst", app_name)
-  installed_folder <- system.file(app_name, package = "drilldowndemo")
-  if(dir_exists(source_folder)) app_folder <- source_folder
-  if(is.null(app_folder) && dir_exists(installed_folder)) app_folder <- installed_folder
-  if(!is.null(app_folder)) app_file <- path(app_folder, "app.R")
-  if(is.null(app_file)) stop("App not found")
-  app_file
+  source_folder <- path("inst", "shiny")
+  installed_folder <- system.file("shiny", package = "drilldowndemo")
+  if (dir_exists(source_folder)) app_folder <- source_folder
+  if (is.null(app_folder) && dir_exists(installed_folder)) app_folder <- installed_folder
+  app_folder
+}
+
+
+find_app <- function(app_name) {
+  app_folder <- find_folder()
+  app_folders <- dir_ls(app_folder)
+  sub_folders <- path_file(app_folders)
+  app_names <- substr(sub_folders, 3, nchar(sub_folders))
+  app_match <- app_names == app_name
+  if (any(app_match)) app_name <- sub_folders[app_match]
+  file_path <- path(app_folder, app_name, "app.R")
+  if (!file_exists(file_path)) stop("App not found")
+  file_path
 }
