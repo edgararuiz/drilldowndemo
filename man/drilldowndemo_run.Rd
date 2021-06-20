@@ -4,7 +4,7 @@
 \alias{drilldowndemo_run}
 \title{Runs an example Shiny app}
 \usage{
-drilldowndemo_run(app_name)
+drilldowndemo_run(app_name = NULL)
 }
 \arguments{
 \item{app_name}{Name of one of Shiny apps within the package. Possible values:

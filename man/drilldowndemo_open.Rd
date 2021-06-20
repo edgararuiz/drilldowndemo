@@ -4,7 +4,7 @@
 \alias{drilldowndemo_open}
 \title{Opens an example Shiny app in the RStudio IDE}
 \usage{
-drilldowndemo_open(app_name)
+drilldowndemo_open(app_name = NULL)
 }
 \arguments{
 \item{app_name}{Name of one of Shiny apps within the package. Possible values:
