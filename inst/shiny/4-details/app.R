@@ -4,6 +4,7 @@ library(dplyr)
 library(ggplot2)
 library(ggiraph)
 library(janitor)
+library(DT)
 
 ui <- dashboardPage(
   dashboardHeader(title = "Diamonds dashboard"),
